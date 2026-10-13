@@ -1,40 +1,40 @@
 # Static Site Generator (SSG)
 
-Prosty generator stron statycznych w Pythonie — projekt na Advanced Python Programming.
+A simple static site generator written in Python — project for Advanced Python Programming.
 
-## Skład grupy
+## Team
 
 - Michał Burda
 - Michał Broś
 - Paweł Froń
 
-## Instalacja
+## Installation
 
 ```bash
 pip install -e ".[dev]"
 ```
 
-## Struktura projektu
+## Project structure
 
 ```
 APP/
-├── config.yaml          # konfiguracja strony
-├── content/             # pliki Markdown ze front matter
-├── templates/           # szablony Jinja2 (kolejny etap)
-├── static/              # CSS, obrazy
-├── output/              # wygenerowana strona (kolejny etap)
-├── src/ssg/             # kod źródłowy
-└── tests/               # testy
+├── config.yaml          # site configuration
+├── content/             # Markdown files with front matter
+├── templates/           # Jinja2 templates (next stage)
+├── static/              # CSS, images
+├── output/              # generated site (next stage)
+├── src/ssg/             # source code
+└── tests/               # tests
 ```
 
 ## Status
 
-Zrealizowane:
+Completed:
 
-1. Struktura projektu i konfiguracja
-2. Parsowanie Markdown + front matter
+1. Project structure and configuration
+2. Markdown + front matter parsing
 
-## Przykład użycia parsera
+## Parser usage example
 
 ```python
 from pathlib import Path
@@ -48,7 +48,7 @@ print(page.title)
 print(page.html)
 ```
 
-## Testy
+## Tests
 
 ```bash
 pytest
