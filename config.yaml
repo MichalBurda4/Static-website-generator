@@ -1,0 +1,8 @@
+site_name: "Mój Blog"
+author: "Michał Burda, Michał Broś, Paweł Froń"
+description: "Strona wygenerowana przez prosty Static Site Generator"
+
+content_dir: "content"
+templates_dir: "templates"
+static_dir: "static"
+output_dir: "output"

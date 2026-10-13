@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ssg"
+version = "0.1.0"
+description = "Prosty generator stron statycznych (Static Site Generator)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "Jinja2>=3.1",
+    "markdown>=3.5",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+ssg = "ssg.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

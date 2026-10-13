@@ -1,0 +1,14 @@
+/* Style zostaną podpięte w etapie generowania HTML */
+:root {
+  --bg: #f7f4ef;
+  --text: #1f1a17;
+  --accent: #0b5fff;
+}
+
+body {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
