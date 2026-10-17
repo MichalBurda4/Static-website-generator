@@ -11,7 +11,7 @@ A simple static site generator written in Python — project for Advanced Python
 ## Installation
 
 ```bash
-pip install -e ".[dev]"
+make setup
 ```
 
 ## Project structure
@@ -51,5 +51,5 @@ print(page.html)
 ## Tests
 
 ```bash
-pytest
+make test
 ```
