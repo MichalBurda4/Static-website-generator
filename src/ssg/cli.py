@@ -14,7 +14,7 @@ from ssg.parser import load_pages
 def _configure_stdout() -> None:
     """Ustaw UTF-8 na Windows, żeby polskie znaki nie wywalały CLI."""
     if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # pyright: ignore
 
 
 def main(argv: list[str] | None = None) -> None:

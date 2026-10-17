@@ -55,7 +55,7 @@ def split_front_matter(text: str) -> tuple[dict[str, Any], str]:
 
     metadata = yaml.safe_load(raw_meta) or {}
     if not isinstance(metadata, dict):
-        raise ValueError("Front matter musi być mapowaniem klucz-wartość YAML.")
+        raise TypeError("Front matter musi być mapowaniem klucz-wartość YAML.")
 
     return metadata, body
 
@@ -90,7 +90,9 @@ def parse_markdown_text(text: str, *, source_path: Path | None = None) -> Page:
     path = source_path or Path("untitled.md")
     metadata, body = split_front_matter(text)
 
-    title = str(metadata.get("title") or path.stem.replace("-", " ").replace("_", " ").title())
+    title = str(
+        metadata.get("title") or path.stem.replace("-", " ").replace("_", " ").title()
+    )
     page_date = _normalize_date(metadata.get("date"))
     slug = str(metadata.get("slug") or _slug_from_path(path))
 

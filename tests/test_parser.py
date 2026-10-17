@@ -10,7 +10,6 @@ from ssg.parser import (
     split_front_matter,
 )
 
-
 SAMPLE = """---
 title: Przykład
 date: 2026-03-20

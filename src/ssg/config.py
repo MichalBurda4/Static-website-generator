@@ -58,7 +58,7 @@ def load_config(config_path: Path) -> SiteConfig:
         raw = yaml.safe_load(file) or {}
 
     if not isinstance(raw, dict):
-        raise ValueError("Plik konfiguracji musi zawierać mapowanie klucz-wartość.")
+        raise TypeError("Plik konfiguracji musi zawierać mapowanie klucz-wartość.")
 
     required = (
         "site_name",
@@ -71,7 +71,9 @@ def load_config(config_path: Path) -> SiteConfig:
     )
     missing = [key for key in required if key not in raw or raw[key] in (None, "")]
     if missing:
-        raise ValueError(f"Brakujące lub puste pola w konfiguracji: {', '.join(missing)}")
+        raise ValueError(
+            f"Brakujące lub puste pola w konfiguracji: {', '.join(missing)}"
+        )
 
     root_dir = config_path.resolve().parent
 
