@@ -1,4 +1,4 @@
-"""Parsowanie plików Markdown z front matter YAML."""
+"""Parse Markdown files with YAML front matter."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ FRONT_MATTER_PATTERN = re.compile(
 
 @dataclass(frozen=True)
 class Page:
-    """Pojedyncza strona wczytana z pliku Markdown."""
+    """A single page loaded from a Markdown file."""
 
     source_path: Path
     title: str
@@ -31,7 +31,7 @@ class Page:
 
     @property
     def excerpt(self) -> str:
-        """Krótki fragment treści (pierwszy niepusty akapit)."""
+        """A short excerpt (the first non-empty paragraph)."""
         for line in self.content_markdown.splitlines():
             stripped = line.strip()
             if stripped and not stripped.startswith("#"):
@@ -40,11 +40,11 @@ class Page:
 
 
 def split_front_matter(text: str) -> tuple[dict[str, Any], str]:
-    """Oddziel front matter YAML od treści Markdown.
+    """Separate YAML front matter from the Markdown body.
 
     Returns:
-        Para ``(metadata, markdown_body)``. Gdy brak front matter,
-        metadata jest pustym słownikiem, a body to cały tekst.
+        A pair ``(metadata, markdown_body)``. When there is no front matter,
+        metadata is an empty dict and body is the entire text.
     """
     match = FRONT_MATTER_PATTERN.match(text)
     if not match:
@@ -55,13 +55,13 @@ def split_front_matter(text: str) -> tuple[dict[str, Any], str]:
 
     metadata = yaml.safe_load(raw_meta) or {}
     if not isinstance(metadata, dict):
-        raise TypeError("Front matter musi być mapowaniem klucz-wartość YAML.")
+        raise TypeError("Front matter must be a YAML key-value mapping.")
 
     return metadata, body
 
 
 def markdown_to_html(text: str) -> str:
-    """Konwertuj treść Markdown na HTML."""
+    """Convert Markdown content to HTML."""
     return markdown.markdown(
         text,
         extensions=["fenced_code", "tables", "nl2br"],
@@ -78,7 +78,7 @@ def _normalize_date(value: Any) -> date | None:
         return value
     if isinstance(value, str):
         return date.fromisoformat(value)
-    raise ValueError(f"Nieobsługiwany format daty: {value!r}")
+    raise ValueError(f"Unsupported date format: {value!r}")
 
 
 def _slug_from_path(path: Path) -> str:
@@ -86,7 +86,7 @@ def _slug_from_path(path: Path) -> str:
 
 
 def parse_markdown_text(text: str, *, source_path: Path | None = None) -> Page:
-    """Sparsuj treść pliku Markdown (tekst) do obiektu ``Page``."""
+    """Parse Markdown file contents (text) into a ``Page`` object."""
     path = source_path or Path("untitled.md")
     metadata, body = split_front_matter(text)
 
@@ -108,24 +108,24 @@ def parse_markdown_text(text: str, *, source_path: Path | None = None) -> Page:
 
 
 def parse_markdown_file(path: Path) -> Page:
-    """Wczytaj i sparsuj plik ``.md``."""
+    """Load and parse a ``.md`` file."""
     if not path.is_file():
-        raise FileNotFoundError(f"Nie znaleziono pliku: {path}")
+        raise FileNotFoundError(f"File not found: {path}")
 
     text = path.read_text(encoding="utf-8")
     return parse_markdown_text(text, source_path=path)
 
 
 def discover_markdown_files(content_dir: Path) -> list[Path]:
-    """Znajdź wszystkie pliki Markdown w katalogu treści (rekurencyjnie)."""
+    """Find all Markdown files in the content directory (recursively)."""
     if not content_dir.is_dir():
-        raise FileNotFoundError(f"Nie znaleziono katalogu treści: {content_dir}")
+        raise FileNotFoundError(f"Content directory not found: {content_dir}")
 
     return sorted(content_dir.rglob("*.md"))
 
 
 def load_pages(content_dir: Path) -> list[Page]:
-    """Wczytaj wszystkie strony z katalogu ``content``."""
+    """Load all pages from the ``content`` directory."""
     pages = [parse_markdown_file(path) for path in discover_markdown_files(content_dir)]
     return sorted(
         pages,

@@ -40,5 +40,5 @@ def test_load_config_missing_fields_raises(tmp_path: Path) -> None:
     config_file = tmp_path / "config.yaml"
     config_file.write_text("site_name: Only Name\n", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="Brakujące"):
+    with pytest.raises(ValueError, match="Missing or empty"):
         load_config(config_file)

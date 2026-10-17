@@ -1,4 +1,4 @@
-"""Wczytywanie i walidacja konfiguracji generatora."""
+"""Load and validate generator configuration."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import yaml
 
 @dataclass(frozen=True)
 class SiteConfig:
-    """Konfiguracja strony i ścieżek projektu."""
+    """Site configuration and project paths."""
 
     site_name: str
     author: str
@@ -39,26 +39,26 @@ class SiteConfig:
 
 
 def load_config(config_path: Path) -> SiteConfig:
-    """Wczytaj konfigurację z pliku YAML.
+    """Load configuration from a YAML file.
 
     Args:
-        config_path: Ścieżka do pliku ``config.yaml``.
+        config_path: Path to the ``config.yaml`` file.
 
     Returns:
-        Obiekt ``SiteConfig`` z ścieżkami względem katalogu projektu.
+        A ``SiteConfig`` object with paths relative to the project directory.
 
     Raises:
-        FileNotFoundError: Gdy plik konfiguracji nie istnieje.
-        ValueError: Gdy brakuje wymaganych pól lub wartości są niepoprawne.
+        FileNotFoundError: If the configuration file does not exist.
+        ValueError: If required fields are missing or values are invalid.
     """
     if not config_path.is_file():
-        raise FileNotFoundError(f"Nie znaleziono pliku konfiguracji: {config_path}")
+        raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
     with config_path.open(encoding="utf-8") as file:
         raw = yaml.safe_load(file) or {}
 
     if not isinstance(raw, dict):
-        raise TypeError("Plik konfiguracji musi zawierać mapowanie klucz-wartość.")
+        raise TypeError("The configuration file must contain a key-value mapping.")
 
     required = (
         "site_name",
@@ -71,9 +71,7 @@ def load_config(config_path: Path) -> SiteConfig:
     )
     missing = [key for key in required if key not in raw or raw[key] in (None, "")]
     if missing:
-        raise ValueError(
-            f"Brakujące lub puste pola w konfiguracji: {', '.join(missing)}"
-        )
+        raise ValueError(f"Missing or empty configuration fields: {', '.join(missing)}")
 
     root_dir = config_path.resolve().parent
 

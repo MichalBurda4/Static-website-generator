@@ -1,7 +1,7 @@
 [project]
 name = "ssg"
 version = "0.1.0"
-description = "Prosty generator stron statycznych (Static Site Generator)"
+description = "Simple static site generator"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
