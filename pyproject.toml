@@ -21,6 +21,9 @@ dev = [
 [project.scripts]
 ssg = "ssg.cli:main"
 
+[tool.uv]
+package= true
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
