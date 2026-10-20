@@ -1,12 +1,22 @@
+# Tooling / build artifacts (venv, caches, coverage) live under artifacts/
+artifacts/*
+!artifacts/.gitkeep
+
+# Legacy locations (if someone creates them outside artifacts/)
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 __pycache__/
 *.py[cod]
 *.egg-info/
 .eggs/
 dist/
 build/
-.pytest_cache/
-.venv/
-venv/
 .env
+
+# Generated site (product of `make build`)
 output/*
 !output/.gitkeep

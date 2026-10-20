@@ -15,6 +15,7 @@ dev = [
     "pre-commit>=4.7.0",
     "pyright>=1.1.414",
     "pytest>=9.1.1",
+    "pytest-cov>=6.0",
     "ruff>=0.17.1",
 ]
 
@@ -22,19 +23,32 @@ dev = [
 ssg = "ssg.cli:main"
 
 [tool.uv]
-package= true
-
+package = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+cache_dir = "artifacts/pytest"
+
+[tool.coverage.run]
+source = ["ssg"]
+branch = true
+data_file = "artifacts/coverage/coverage.db"
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+
+[tool.coverage.html]
+directory = "artifacts/coverage/html"
 
 [tool.ruff]
 include = ["pyproject.toml", "src/**/*.py", "tests/**/*.py"]
+cache-dir = "artifacts/ruff"
 
 [tool.pyright]
 include = ["src"]
 pythonVersion = "3.14"
 typeCheckingMode = "standard"  # or "strict"
-venvPath = "."
-venv = ".venv"
+venvPath = "artifacts"
+venv = "venv"

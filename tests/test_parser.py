@@ -74,3 +74,37 @@ def test_parse_markdown_file_and_load_pages(tmp_path: Path) -> None:
 def test_parse_markdown_file_missing_raises(tmp_path: Path) -> None:
     with pytest.raises(FileNotFoundError):
         parse_markdown_file(tmp_path / "brak.md")
+
+
+def test_parse_uses_defaults_without_front_matter() -> None:
+    page = parse_markdown_text("# Only body\n\nParagraph\n", source_path=Path("my_post.md"))
+
+    assert page.title == "My Post"
+    assert page.date is None
+    assert page.slug == "my-post"
+    assert page.excerpt == "Paragraph"
+
+
+def test_excerpt_skips_headings_only() -> None:
+    page = parse_markdown_text("# Title only\n")
+    assert page.excerpt == ""
+
+
+def test_invalid_front_matter_raises() -> None:
+    with pytest.raises(TypeError, match="key-value"):
+        split_front_matter("---\n- just a list\n---\n\nBody\n")
+
+
+def test_discover_missing_content_dir_raises(tmp_path: Path) -> None:
+    from ssg.parser import discover_markdown_files
+
+    with pytest.raises(FileNotFoundError):
+        discover_markdown_files(tmp_path / "missing")
+
+
+def test_normalize_date_from_datetime_string() -> None:
+    page = parse_markdown_text(
+        "---\ntitle: D\ndate: 2026-04-01T12:00:00\n---\n\nX\n",
+        source_path=Path("d.md"),
+    )
+    assert page.date == date(2026, 4, 1)

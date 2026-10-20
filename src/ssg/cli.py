@@ -1,4 +1,4 @@
-"""Temporary CLI entry point — full commands come in later stages."""
+"""CLI entry point for the static site generator."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from ssg import __version__
+from ssg.builder import SiteBuilder
 from ssg.config import load_config
 from ssg.parser import load_pages
 
@@ -15,6 +16,15 @@ def _configure_stdout() -> None:
     """Force UTF-8 on Windows so non-ASCII characters do not crash the CLI."""
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # pyright: ignore
+
+
+def _add_config_argument(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=Path("config.yaml"),
+        help="Path to the configuration file (default: config.yaml)",
+    )
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -26,14 +36,15 @@ def main(argv: list[str] | None = None) -> None:
 
     parse_cmd = subparsers.add_parser(
         "parse",
-        help="Load and print parsed Markdown files (project step 2)",
+        help="Load and print parsed Markdown files",
     )
-    parse_cmd.add_argument(
-        "--config",
-        type=Path,
-        default=Path("config.yaml"),
-        help="Path to the configuration file (default: config.yaml)",
+    _add_config_argument(parse_cmd)
+
+    build_cmd = subparsers.add_parser(
+        "build",
+        help="Generate HTML pages into the output directory",
     )
+    _add_config_argument(build_cmd)
 
     args = parser.parse_args(argv)
 
@@ -53,6 +64,14 @@ def main(argv: list[str] | None = None) -> None:
             snippet = page.html[:80].replace("\n", " ")
             print(f"  HTML: {snippet}...")
             print()
+        return
+
+    if args.command == "build":
+        config = load_config(args.config)
+        written = SiteBuilder(config).build()
+        print(f"Built {len(written)} HTML file(s) into: {config.output_path}")
+        for path in written:
+            print(f"  - {path.name}")
         return
 
     parser.print_help()

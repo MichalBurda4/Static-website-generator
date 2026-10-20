@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}{{ site.site_name }}{% endblock %}
+
+{% block content %}
+<section class="post-list">
+  <h1>Posts</h1>
+
+  {% if pages %}
+  <ul>
+    {% for page in pages %}
+    <li class="post-item">
+      <a href="{{ page.slug }}.html">{{ page.title }}</a>
+      {% if page.date %}
+      <time datetime="{{ page.date.isoformat() }}">{{ page.date.isoformat() }}</time>
+      {% endif %}
+      {% if page.excerpt %}
+      <p class="excerpt">{{ page.excerpt }}</p>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>No posts yet.</p>
+  {% endif %}
+</section>
+{% endblock %}
