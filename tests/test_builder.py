@@ -1,6 +1,6 @@
+import shutil
 from datetime import date
 from pathlib import Path
-import shutil
 
 import yaml
 

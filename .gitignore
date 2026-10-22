@@ -1,6 +1,5 @@
 # Tooling / build artifacts (venv, caches, coverage) live under artifacts/
-artifacts/*
-!artifacts/.gitkeep
+.artifacts
 
 # Legacy locations (if someone creates them outside artifacts/)
 .venv/
@@ -18,5 +17,4 @@ build/
 .env
 
 # Generated site (product of `make build`)
-output/*
-!output/.gitkeep
+output

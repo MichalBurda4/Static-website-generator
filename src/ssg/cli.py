@@ -27,8 +27,7 @@ def _add_config_argument(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def main(argv: list[str] | None = None) -> None:
-    _configure_stdout()
+def _configure_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Simple static site generator")
     parser.add_argument("--version", action="version", version=f"ssg {__version__}")
 
@@ -46,6 +45,13 @@ def main(argv: list[str] | None = None) -> None:
     )
     _add_config_argument(build_cmd)
 
+    return parser
+
+
+def main(argv: list[str] | None = None) -> None:
+    _configure_stdout()
+
+    parser = _configure_parser()
     args = parser.parse_args(argv)
 
     if args.command == "parse":

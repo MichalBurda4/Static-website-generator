@@ -1,44 +1,39 @@
-# Development tasks for the Static Site Generator.
-# Run `make help` to list targets. Each target is described by the `#` comment above it.
-
-ARTIFACTS := artifacts
-export UV_PROJECT_ENVIRONMENT := $(ARTIFACTS)/venv
-
 .PHONY: help setup test lint format build clean
 
 # Show available make targets
 help:
-	@echo "make setup   - create venv in artifacts/ and install dependencies + hooks"
-	@echo "make test    - run tests and show coverage percentage"
-	@echo "make lint    - check code with ruff and pyright"
-	@echo "make format  - format code with ruff"
-	@echo "make build   - generate the static site into output/"
-	@echo "make clean   - remove caches and coverage reports under artifacts/"
+	@awk '/^#/{c=substr($$0,3);next}c&&/^[[:alpha:]][[:alnum:]_-]+:/{print substr($$1,1,index($$1,":")),c}1{c=0}' $(MAKEFILE_LIST) | column -s: -t
 
-# Create the virtualenv under artifacts/venv and install project + git hooks
+# Install project + git hooks
 setup:
 	uv sync
 	uv run pre-commit install
 
-# Run the test suite and print terminal + HTML coverage reports
+# Run the test suite
 test:
-	uv run pytest --cov=ssg --cov-report=term-missing --cov-report=html:$(ARTIFACTS)/coverage/html
+	uv run pytest --cov=ssg --cov-report=term-missing --cov-report=html:.artifacts/coverage/html
 
 # Lint the codebase (ruff + pyright)
-lint:
+lint: 
 	uv run ruff check --fix
 	uv run pyright
 
 # Auto-format Python sources with ruff
-format:
+format: 
 	uv run ruff format
 
 # Build Markdown content into HTML under output/
-build:
-	uv run python -m ssg.cli build
+build: 
+	uv run ssg build
 
-# Delete tool caches / coverage output (does not remove the venv)
+# View the output in the browser (locahost:8000)
+view-output:
+	uv run python -m http.server -d output -b localhost 8000
+
+# View HTML tests coverage in the browser (localhost:8080)
+view-coverage:
+	uv run python -m http.server -d .artifacts/coverage/html -b localhost 8080
+
+# Delete tool caches / coverage output
 clean:
-	uv run python -c "from pathlib import Path; import shutil; root=Path('$(ARTIFACTS)'); \
-	[shutil.rmtree(p, ignore_errors=True) for p in [root/'pytest', root/'coverage', root/'ruff']]; \
-	print('Cleaned pytest/coverage/ruff caches under artifacts/')"
+	rm -rf .artifacts

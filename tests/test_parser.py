@@ -77,7 +77,9 @@ def test_parse_markdown_file_missing_raises(tmp_path: Path) -> None:
 
 
 def test_parse_uses_defaults_without_front_matter() -> None:
-    page = parse_markdown_text("# Only body\n\nParagraph\n", source_path=Path("my_post.md"))
+    page = parse_markdown_text(
+        "# Only body\n\nParagraph\n", source_path=Path("my_post.md")
+    )
 
     assert page.title == "My Post"
     assert page.date is None
