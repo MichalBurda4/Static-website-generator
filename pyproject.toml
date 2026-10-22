@@ -50,4 +50,4 @@ cache-dir = ".artifacts/ruff"
 include = ["src"]
 pythonVersion = "3.14"
 typeCheckingMode = "standard"  # or "strict"
-venv = "venv"
+venv = ".venv"
