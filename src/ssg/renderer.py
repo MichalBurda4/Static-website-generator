@@ -2,38 +2,48 @@
 
 from __future__ import annotations
 
+import logging
+
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from ssg.config import SiteConfig
 from ssg.parser import Page
+
+logger = logging.getLogger(__name__)
 
 
 class Renderer:
     """Load templates from disk and render pages / the homepage."""
 
     def __init__(self, config: SiteConfig) -> None:
+        """Create a renderer that loads templates from the configured directory."""
         self._config = config
         self._env = Environment(
             loader=FileSystemLoader(str(config.templates_path)),
             autoescape=select_autoescape(["html", "xml"]),
         )
+        logger.debug("Renderer ready (templates=%s)", config.templates_path)
 
     def render_index(self, pages: list[Page]) -> str:
         """Render the homepage with a list of posts."""
         template = self._env.get_template("index.html")
-        return template.render(
+        html = template.render(
             site=self._config,
             pages=pages,
             home_url="index.html",
             static_url="static/",
         )
+        logger.debug("Rendered index with %d page(s)", len(pages))
+        return html
 
     def render_post(self, page: Page) -> str:
         """Render a single post page."""
         template = self._env.get_template("post.html")
-        return template.render(
+        html = template.render(
             site=self._config,
             page=page,
             home_url="index.html",
             static_url="static/",
         )
+        logger.debug("Rendered post %s", page.slug)
+        return html

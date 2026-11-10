@@ -40,11 +40,16 @@ Tooling artifacts are kept under `artifacts/` (not scattered in the repo root):
 ## Build the site
 
 ```bash
-python -m ssg.cli build
+uv run ssg build
+# or:
+uv run python -m ssg build
 ```
 
+Optional: `uv run ssg parse` lists parsed Markdown pages without writing HTML.
+
 Generated files land in `output/` (`index.html` + one HTML file per post).
-Open `output/index.html` in a browser to preview.
+Static assets from `static/` (CSS, images) are copied to `output/static/`.
+Open `output/index.html` in a browser to preview, or run `make view-output`.
 
 ## Status
 
@@ -54,6 +59,8 @@ Completed:
 2. Markdown + front matter parsing
 3. HTML generation from Jinja2 templates
 4. Homepage with post list + individual post pages
+5. CLI interface (`ssg parse`, `ssg build`)
+6. Copy static assets (CSS, images) into `output/static/`
 
 ## Writing content
 

@@ -13,3 +13,9 @@ Możesz pisać w Markdown:
 - listy
 - **pogrubienie**
 - `kod inline`
+
+## Zdjęcie testowe
+
+Gmach główny AGH:
+
+![Gmach główny AGH w Krakowie](static/images/agh-main-building.jpg)

@@ -9,8 +9,8 @@ setup:
 	uv sync
 	uv run pre-commit install
 
-# Run the test suite
-test:
+# Run the test suite (runs setup first)
+test: setup
 	uv run pytest --cov=ssg --cov-report=term-missing --cov-report=html:.artifacts/coverage/html
 
 # Lint the codebase (ruff + pyright)

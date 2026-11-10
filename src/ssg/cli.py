@@ -3,13 +3,19 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 from ssg import __version__
 from ssg.builder import SiteBuilder
-from ssg.config import load_config
-from ssg.parser import load_pages
+from ssg.config import SiteConfig, load_config
+from ssg.parser import Page, load_pages
+
+logger = logging.getLogger(__name__)
+
+CommandHandler = Callable[[SiteConfig], None]
 
 
 def _configure_stdout() -> None:
@@ -18,7 +24,16 @@ def _configure_stdout() -> None:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # pyright: ignore
 
 
+def _configure_logging() -> None:
+    """Configure application logging for library modules."""
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(levelname)s %(name)s: %(message)s",
+    )
+
+
 def _add_config_argument(parser: argparse.ArgumentParser) -> None:
+    """Add the shared ``--config`` option to a subcommand parser."""
     parser.add_argument(
         "--config",
         type=Path,
@@ -28,6 +43,7 @@ def _add_config_argument(parser: argparse.ArgumentParser) -> None:
 
 
 def _configure_parser() -> argparse.ArgumentParser:
+    """Build the top-level argument parser with ``parse`` and ``build`` commands."""
     parser = argparse.ArgumentParser(description="Simple static site generator")
     parser.add_argument("--version", action="version", version=f"ssg {__version__}")
 
@@ -48,39 +64,66 @@ def _configure_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _print_page(page: Page) -> None:
+    """Print one parsed page summary for the user."""
+    date_str = page.date.isoformat() if page.date else "no date"
+    snippet = page.html[:80].replace("\n", " ")
+    print(f"- {page.title} ({date_str}) [{page.slug}]")
+    print(f"  file: {page.source_path}")
+    print(f"  HTML: {snippet}...")
+    print()
+
+
+def _cmd_parse(config: SiteConfig) -> None:
+    """Handle the ``parse`` command and print results to the user."""
+    pages = load_pages(config.content_path)
+    if not pages:
+        print(f"No Markdown files in: {config.content_path}")
+        return
+
+    print(f"Site: {config.site_name}")
+    print(f"Pages found: {len(pages)}\n")
+    for page in pages:
+        _print_page(page)
+
+
+def _cmd_build(config: SiteConfig) -> None:
+    """Handle the ``build`` command and print a short build summary."""
+    result = SiteBuilder(config).build()
+
+    print(f"Built {len(result.html_files)} HTML file(s) into: {config.output_path}")
+    for path in result.html_files:
+        print(f"  - {path.name}")
+
+    static_dir = config.output_path / "static"
+    print(f"Copied {len(result.static_files)} static file(s) into: {static_dir}")
+    for path in result.static_files:
+        print(f"  - {path.relative_to(static_dir)}")
+
+
+def _command_handlers() -> dict[str, CommandHandler]:
+    """Return the mapping of CLI command names to handlers."""
+    return {
+        "parse": _cmd_parse,
+        "build": _cmd_build,
+    }
+
+
 def main(argv: list[str] | None = None) -> None:
+    """Parse CLI arguments and dispatch the selected command."""
     _configure_stdout()
+    _configure_logging()
 
     parser = _configure_parser()
     args = parser.parse_args(argv)
+    handler = _command_handlers().get(args.command)
 
-    if args.command == "parse":
-        config = load_config(args.config)
-        pages = load_pages(config.content_path)
-        if not pages:
-            print(f"No Markdown files in: {config.content_path}")
-            return
-
-        print(f"Site: {config.site_name}")
-        print(f"Pages found: {len(pages)}\n")
-        for page in pages:
-            date_str = page.date.isoformat() if page.date else "no date"
-            print(f"- {page.title} ({date_str}) [{page.slug}]")
-            print(f"  file: {page.source_path}")
-            snippet = page.html[:80].replace("\n", " ")
-            print(f"  HTML: {snippet}...")
-            print()
+    if handler is None:
+        parser.print_help()
         return
 
-    if args.command == "build":
-        config = load_config(args.config)
-        written = SiteBuilder(config).build()
-        print(f"Built {len(written)} HTML file(s) into: {config.output_path}")
-        for path in written:
-            print(f"  - {path.name}")
-        return
-
-    parser.print_help()
+    logger.debug("Running command: %s", args.command)
+    handler(load_config(args.config))
 
 
 if __name__ == "__main__":

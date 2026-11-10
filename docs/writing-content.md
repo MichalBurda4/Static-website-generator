@@ -107,5 +107,5 @@ You should see your title, date, slug, and a short HTML snippet.
 ## Related code
 
 - Parser: `src/ssg/parser.py`
-- CLI: `src/ssg/cli.py` (`ssg parse`)
+- CLI: `src/ssg/cli.py` (`ssg parse`, `ssg build`)
 - Sample content: `content/hello.md`, `content/posts/drugi-wpis.md`

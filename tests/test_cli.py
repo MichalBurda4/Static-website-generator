@@ -76,10 +76,24 @@ def test_cli_build_writes_output(tmp_path: Path, capsys, monkeypatch) -> None:
 
     out = capsys.readouterr().out
     assert "Built" in out
+    assert "Copied" in out
+    assert "style.css" in out
     assert (tmp_path / "output" / "index.html").is_file()
     assert (tmp_path / "output" / "post.html").is_file()
+    assert (tmp_path / "output" / "static" / "css" / "style.css").is_file()
 
 
 def test_cli_without_command_prints_help(capsys) -> None:
     main([])
     assert "static site generator" in capsys.readouterr().out.lower()
+
+
+def test_cli_version_prints_and_exits(capsys) -> None:
+    try:
+        main(["--version"])
+    except SystemExit as exc:
+        assert exc.code == 0
+    else:
+        raise AssertionError("expected SystemExit from --version")
+
+    assert "ssg" in capsys.readouterr().out.lower()

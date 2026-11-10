@@ -62,14 +62,15 @@ def _write_project(tmp_path: Path) -> Path:
 
 def test_build_writes_index_post_and_static(tmp_path: Path) -> None:
     config = load_config(_write_project(tmp_path))
-    written = SiteBuilder(config).build()
+    result = SiteBuilder(config).build()
 
     index = tmp_path / "output" / "index.html"
     post = tmp_path / "output" / "hello.html"
     css = tmp_path / "output" / "static" / "css" / "style.css"
 
-    assert index in written
-    assert post in written
+    assert index in result.html_files
+    assert post in result.html_files
+    assert css in result.static_files
     assert index.is_file()
     assert post.is_file()
     assert css.is_file()
@@ -99,10 +100,24 @@ def test_build_without_static_dir_still_writes_html(tmp_path: Path) -> None:
     shutil.rmtree(tmp_path / "static")
 
     config = load_config(config_path)
-    written = SiteBuilder(config).build()
+    result = SiteBuilder(config).build()
 
-    assert (tmp_path / "output" / "index.html") in written
+    assert (tmp_path / "output" / "index.html") in result.html_files
+    assert result.static_files == []
     assert not (tmp_path / "output" / "static").exists()
+
+
+def test_copy_static_copies_css_and_images(tmp_path: Path) -> None:
+    config = load_config(_write_project(tmp_path))
+    images = tmp_path / "static" / "images"
+    images.mkdir()
+    logo = images / "logo.svg"
+    logo.write_text("<svg xmlns='http://www.w3.org/2000/svg'></svg>", encoding="utf-8")
+
+    copied = SiteBuilder(config).copy_static()
+
+    assert (tmp_path / "output" / "static" / "css" / "style.css") in copied
+    assert (tmp_path / "output" / "static" / "images" / "logo.svg") in copied
 
 
 def test_index_lists_posts(tmp_path: Path) -> None:
