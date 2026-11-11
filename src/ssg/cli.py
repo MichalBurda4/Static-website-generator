@@ -33,7 +33,11 @@ def _configure_logging() -> None:
 
 
 def _add_config_argument(parser: argparse.ArgumentParser) -> None:
-    """Add the shared ``--config`` option to a subcommand parser."""
+    """Add the shared ``--config`` option to a subcommand parser.
+
+    Args:
+        parser: Subcommand parser that receives the option.
+    """
     parser.add_argument(
         "--config",
         type=Path,
@@ -43,7 +47,11 @@ def _add_config_argument(parser: argparse.ArgumentParser) -> None:
 
 
 def _configure_parser() -> argparse.ArgumentParser:
-    """Build the top-level argument parser with ``parse`` and ``build`` commands."""
+    """Build the top-level argument parser with ``parse`` and ``build`` commands.
+
+    Returns:
+        A parser that accepts ``--version``, ``parse``, and ``build``.
+    """
     parser = argparse.ArgumentParser(description="Simple static site generator")
     parser.add_argument("--version", action="version", version=f"ssg {__version__}")
 
@@ -65,7 +73,11 @@ def _configure_parser() -> argparse.ArgumentParser:
 
 
 def _print_page(page: Page) -> None:
-    """Print one parsed page summary for the user."""
+    """Print one parsed page summary for the user.
+
+    Args:
+        page: Page whose title, date, slug, path, and HTML snippet are printed.
+    """
     date_str = page.date.isoformat() if page.date else "no date"
     snippet = page.html[:80].replace("\n", " ")
     print(f"- {page.title} ({date_str}) [{page.slug}]")
@@ -75,7 +87,17 @@ def _print_page(page: Page) -> None:
 
 
 def _cmd_parse(config: SiteConfig) -> None:
-    """Handle the ``parse`` command and print results to the user."""
+    """Handle the ``parse`` command and print results to the user.
+
+    Args:
+        config: Loaded site configuration.
+
+    Raises:
+        FileNotFoundError: If the content directory does not exist.
+        TypeError: If a page's front matter is not a YAML mapping.
+        ValueError: If a page's date is not a supported format.
+        yaml.YAMLError: If a page's front matter is not valid YAML.
+    """
     pages = load_pages(config.content_path)
     if not pages:
         print(f"No Markdown files in: {config.content_path}")
@@ -88,7 +110,18 @@ def _cmd_parse(config: SiteConfig) -> None:
 
 
 def _cmd_build(config: SiteConfig) -> None:
-    """Handle the ``build`` command and print a short build summary."""
+    """Handle the ``build`` command and print a short build summary.
+
+    Args:
+        config: Loaded site configuration.
+
+    Raises:
+        FileNotFoundError: If the content directory does not exist.
+        jinja2.TemplateNotFound: If a required template is missing.
+        TypeError: If a page's front matter is not a YAML mapping.
+        ValueError: If a page's date is not a supported format.
+        yaml.YAMLError: If a page's front matter is not valid YAML.
+    """
     result = SiteBuilder(config).build()
 
     print(f"Built {len(result.html_files)} HTML file(s) into: {config.output_path}")
@@ -102,7 +135,11 @@ def _cmd_build(config: SiteConfig) -> None:
 
 
 def _command_handlers() -> dict[str, CommandHandler]:
-    """Return the mapping of CLI command names to handlers."""
+    """Return the mapping of CLI command names to handlers.
+
+    Returns:
+        Handlers for the ``parse`` and ``build`` commands.
+    """
     return {
         "parse": _cmd_parse,
         "build": _cmd_build,
@@ -110,7 +147,22 @@ def _command_handlers() -> dict[str, CommandHandler]:
 
 
 def main(argv: list[str] | None = None) -> None:
-    """Parse CLI arguments and dispatch the selected command."""
+    """Parse CLI arguments and dispatch the selected command.
+
+    Args:
+        argv: Arguments to parse, excluding the program name. When omitted,
+            ``argparse`` reads ``sys.argv``.
+
+    Raises:
+        SystemExit: If the arguments are invalid or ``--version`` is passed.
+        FileNotFoundError: If the configuration file or content directory
+            does not exist.
+        TypeError: If configuration or front matter is not a YAML mapping.
+        ValueError: If configuration fields are missing or a page date is
+            invalid.
+        yaml.YAMLError: If a YAML file is not valid.
+        jinja2.TemplateNotFound: If ``build`` cannot find a template.
+    """
     _configure_stdout()
     _configure_logging()
 

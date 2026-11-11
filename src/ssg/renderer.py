@@ -16,7 +16,12 @@ class Renderer:
     """Load templates from disk and render pages / the homepage."""
 
     def __init__(self, config: SiteConfig) -> None:
-        """Create a renderer that loads templates from the configured directory."""
+        """Create a renderer that loads templates from the configured directory.
+
+        Args:
+            config: Site configuration. Templates are loaded from
+                ``config.templates_path``.
+        """
         self._config = config
         self._env = Environment(
             loader=FileSystemLoader(str(config.templates_path)),
@@ -25,7 +30,17 @@ class Renderer:
         logger.debug("Renderer ready (templates=%s)", config.templates_path)
 
     def render_index(self, pages: list[Page]) -> str:
-        """Render the homepage with a list of posts."""
+        """Render the homepage with a list of posts.
+
+        Args:
+            pages: Pages passed to the ``index.html`` template.
+
+        Returns:
+            Rendered homepage HTML.
+
+        Raises:
+            jinja2.TemplateNotFound: If ``index.html`` is missing.
+        """
         template = self._env.get_template("index.html")
         html = template.render(
             site=self._config,
@@ -37,7 +52,17 @@ class Renderer:
         return html
 
     def render_post(self, page: Page) -> str:
-        """Render a single post page."""
+        """Render a single post page.
+
+        Args:
+            page: Page passed to the ``post.html`` template.
+
+        Returns:
+            Rendered post HTML.
+
+        Raises:
+            jinja2.TemplateNotFound: If ``post.html`` is missing.
+        """
         template = self._env.get_template("post.html")
         html = template.render(
             site=self._config,
