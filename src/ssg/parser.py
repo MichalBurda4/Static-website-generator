@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Final
@@ -32,6 +32,9 @@ class Page:
         content_markdown: Markdown body with the front matter removed.
         html: Body converted to HTML.
         slug: URL slug used as the output file name.
+        url: Site-relative HTML path, such as ``witaj.html`` or
+            ``posts/drugi-wpis.html``. Empty until the page is loaded from a
+            content directory.
     """
 
     source_path: Path
@@ -41,6 +44,7 @@ class Page:
     content_markdown: str = ""
     html: str = ""
     slug: str = ""
+    url: str = ""
 
     @property
     def excerpt(self) -> str:
@@ -273,6 +277,39 @@ def _sort_pages(pages: list[Page]) -> list[Page]:
     )
 
 
+def _output_url(page: Page, content_dir: Path) -> str:
+    """Build the site-relative HTML path for a page.
+
+    The directory matches the source file's location under ``content_dir``.
+    The file name is ``{slug}.html``.
+
+    Args:
+        page: Parsed page. ``source_path`` must live inside ``content_dir``.
+        content_dir: Root directory of Markdown sources.
+
+    Returns:
+        A path such as ``witaj.html`` or ``posts/drugi-wpis.html``.
+    """
+    relative = page.source_path.resolve().relative_to(content_dir.resolve())
+    filename = f"{page.slug}.html"
+    if relative.parent == Path("."):
+        return filename
+    return f"{relative.parent.as_posix()}/{filename}"
+
+
+def _with_output_url(page: Page, content_dir: Path) -> Page:
+    """Return a copy of ``page`` with ``url`` set from its content path.
+
+    Args:
+        page: Parsed page to copy.
+        content_dir: Root directory of Markdown sources.
+
+    Returns:
+        The same page data, with ``url`` filled in.
+    """
+    return replace(page, url=_output_url(page, content_dir))
+
+
 def load_pages(content_dir: Path) -> list[Page]:
     """Load all pages from the ``content`` directory.
 
@@ -281,6 +318,7 @@ def load_pages(content_dir: Path) -> list[Page]:
 
     Returns:
         Parsed pages sorted by date (newest first), then by title.
+        Each page has ``url`` set to its site-relative HTML path.
 
     Raises:
         FileNotFoundError: If ``content_dir`` does not exist.
@@ -288,7 +326,10 @@ def load_pages(content_dir: Path) -> list[Page]:
         ValueError: If a page's date is not a supported format.
         yaml.YAMLError: If a page's front matter is not valid YAML.
     """
-    pages = [parse_markdown_file(path) for path in discover_markdown_files(content_dir)]
+    pages = [
+        _with_output_url(parse_markdown_file(path), content_dir)
+        for path in discover_markdown_files(content_dir)
+    ]
     ordered = _sort_pages(pages)
     logger.info("Loaded %d page(s) from %s", len(ordered), content_dir)
     return ordered

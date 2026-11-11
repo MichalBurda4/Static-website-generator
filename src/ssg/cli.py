@@ -81,6 +81,7 @@ def _print_page(page: Page) -> None:
     date_str = page.date.isoformat() if page.date else "no date"
     snippet = page.html[:80].replace("\n", " ")
     print(f"- {page.title} ({date_str}) [{page.slug}]")
+    print(f"  url: {page.url}")
     print(f"  file: {page.source_path}")
     print(f"  HTML: {snippet}...")
     print()
@@ -126,7 +127,7 @@ def _cmd_build(config: SiteConfig) -> None:
 
     print(f"Built {len(result.html_files)} HTML file(s) into: {config.output_path}")
     for path in result.html_files:
-        print(f"  - {path.name}")
+        print(f"  - {path.relative_to(config.output_path)}")
 
     static_dir = config.output_path / "static"
     print(f"Copied {len(result.static_files)} static file(s) into: {static_dir}")

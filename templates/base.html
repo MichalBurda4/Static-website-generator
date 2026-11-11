@@ -12,6 +12,13 @@
     <div class="wrap">
       <a class="site-title" href="{{ home_url }}">{{ site.site_name }}</a>
       <p class="site-tagline">{{ site.description }}</p>
+      {% if pages %}
+      <nav class="site-nav" aria-label="Pages">
+        {% for page in pages %}
+        <a href="{{ root_prefix }}{{ page.url }}">{{ page.title }}</a>
+        {% endfor %}
+      </nav>
+      {% endif %}
     </div>
   </header>
 

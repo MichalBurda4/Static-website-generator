@@ -47,7 +47,7 @@ uv run python -m ssg build
 
 Optional: `uv run ssg parse` lists parsed Markdown pages without writing HTML.
 
-Generated files land in `output/` (`index.html` + one HTML file per post).
+Generated files land in `output/` (`index.html`, root pages beside it, and posts under the same folders as in `content/`).
 Static assets from `static/` (CSS, images) are copied to `output/static/`.
 Open `output/index.html` in a browser to preview, or run `make view-output`.
 

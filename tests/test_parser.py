@@ -69,6 +69,10 @@ def test_parse_markdown_file_and_load_pages(tmp_path: Path) -> None:
 
     pages = load_pages(content_dir)
     assert [p.title for p in pages] == ["Nowszy", "Starszy"]
+    assert {page.title: page.url for page in pages} == {
+        "Nowszy": "posts/b.html",
+        "Starszy": "a.html",
+    }
 
 
 def test_parse_markdown_file_missing_raises(tmp_path: Path) -> None:

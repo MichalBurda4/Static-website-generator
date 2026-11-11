@@ -13,16 +13,16 @@
 <section class="post-list">
   <h1>Posts</h1>
 
-  {% if pages %}
+  {% if posts %}
   <ul>
-    {% for page in pages %}
+    {% for post in posts %}
     <li class="post-item">
-      <a href="{{ page.slug }}.html">{{ page.title }}</a>
-      {% if page.date %}
-      <time datetime="{{ page.date.isoformat() }}">{{ page.date.isoformat() }}</time>
+      <a href="{{ root_prefix }}{{ post.url }}">{{ post.title }}</a>
+      {% if post.date %}
+      <time datetime="{{ post.date.isoformat() }}">{{ post.date.isoformat() }}</time>
       {% endif %}
-      {% if page.excerpt %}
-      <p class="excerpt">{{ page.excerpt }}</p>
+      {% if post.excerpt %}
+      <p class="excerpt">{{ post.excerpt }}</p>
       {% endif %}
     </li>
     {% endfor %}

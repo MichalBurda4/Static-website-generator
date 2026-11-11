@@ -85,10 +85,10 @@ Notes:
 
 | Path | Role |
 |------|------|
-| `content/hello.md` | Page at the content root |
-| `content/posts/my-post.md` | Same parsing; subfolder is only organization for now |
+| `content/hello.md` | Site page. Linked from the header navigation. Written to `output/{slug}.html`. |
+| `content/posts/my-post.md` | Blog post. Listed on the homepage. Written to `output/posts/{slug}.html`. |
 
-Both are loaded the same way today. Folder layout may matter for URLs in a later stage.
+The output directory keeps the same folders as `content/`. Only files inside `content/posts/` appear in the homepage post list. Markdown files placed directly in `content/` appear in the header menu. A file in any other subfolder is still built, at the matching path under `output/`, and is not linked from either place.
 
 ---
 

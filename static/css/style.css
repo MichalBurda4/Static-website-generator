@@ -50,6 +50,17 @@ a:hover {
   color: var(--muted);
 }
 
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
+  margin-top: 0.85rem;
+}
+
+.site-nav a {
+  color: var(--text);
+}
+
 .site-footer {
   border-top: 1px solid var(--line);
   margin-top: 3rem;
