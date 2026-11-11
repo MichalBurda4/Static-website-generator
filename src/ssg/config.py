@@ -22,7 +22,7 @@ REQUIRED_FIELDS = (
 )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SiteConfig:
     """Site configuration and project paths."""
 

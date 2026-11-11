@@ -38,6 +38,7 @@ data_file = ".artifacts/coverage/coverage.db"
 [tool.coverage.report]
 show_missing = true
 skip_empty = true
+fail_under = 95
 
 [tool.coverage.html]
 directory = ".artifacts/coverage/html"

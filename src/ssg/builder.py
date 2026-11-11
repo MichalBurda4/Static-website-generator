@@ -14,7 +14,7 @@ from ssg.renderer import Renderer
 logger = logging.getLogger(__name__)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class BuildResult:
     """Paths produced by a site build."""
 

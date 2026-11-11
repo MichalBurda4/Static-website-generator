@@ -7,7 +7,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 
 import markdown
 import yaml
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 
-FRONT_MATTER_PATTERN = re.compile(
+FRONT_MATTER_PATTERN: Final[re.Pattern] = re.compile(
     r"\A---\s*\n(.*?)\n---\s*\n?(.*)\Z",
     re.DOTALL,
 )
@@ -28,7 +28,7 @@ FRONT_MATTER_PATTERN = re.compile(
 # ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Page:
     """A single page loaded from a Markdown file."""
 
