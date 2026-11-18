@@ -6,29 +6,50 @@ import yaml
 from ssg.config import load_config
 
 
+def _minimal_config(**overrides: object) -> dict[str, object]:
+    data: dict[str, object] = {
+        "site_name": "Test Site",
+        "author": "Tester",
+        "description": "Opis",
+        "content_dir": "content",
+        "templates_dir": "templates",
+        "static_dir": "static",
+        "output_dir": "output",
+    }
+    data.update(overrides)
+    return data
+
+
 def test_load_config_reads_expected_fields(tmp_path: Path) -> None:
     config_file = tmp_path / "config.yaml"
-    config_file.write_text(
-        yaml.dump(
-            {
-                "site_name": "Test Site",
-                "author": "Tester",
-                "description": "Opis",
-                "content_dir": "content",
-                "templates_dir": "templates",
-                "static_dir": "static",
-                "output_dir": "output",
-            }
-        ),
-        encoding="utf-8",
-    )
+    config_file.write_text(yaml.dump(_minimal_config()), encoding="utf-8")
 
     config = load_config(config_file)
 
     assert config.site_name == "Test Site"
     assert config.author == "Tester"
+    assert config.theme == "light"
+    assert config.stylesheet == "css/light.css"
     assert config.content_path == tmp_path / "content"
     assert config.output_path == tmp_path / "output"
+
+
+def test_load_config_reads_theme(tmp_path: Path) -> None:
+    config_file = tmp_path / "config.yaml"
+    config_file.write_text(yaml.dump(_minimal_config(theme="dark")), encoding="utf-8")
+
+    config = load_config(config_file)
+
+    assert config.theme == "dark"
+    assert config.stylesheet == "css/dark.css"
+
+
+def test_load_config_rejects_invalid_theme(tmp_path: Path) -> None:
+    config_file = tmp_path / "config.yaml"
+    config_file.write_text(yaml.dump(_minimal_config(theme="neon")), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="Invalid theme"):
+        load_config(config_file)
 
 
 def test_load_config_missing_file_raises(tmp_path: Path) -> None:
@@ -72,3 +93,12 @@ def test_config_path_helpers(tmp_path: Path) -> None:
 
     assert config.templates_path == tmp_path / "templates"
     assert config.static_path == tmp_path / "static"
+
+
+def test_load_config_normalizes_theme_case(tmp_path: Path) -> None:
+    config_file = tmp_path / "config.yaml"
+    config_file.write_text(yaml.dump(_minimal_config(theme="Dark")), encoding="utf-8")
+
+    config = load_config(config_file)
+
+    assert config.theme == "dark"

@@ -1,6 +1,7 @@
 site_name: "Mój Blog"
 author: "Michał Burda, Michał Broś, Paweł Froń"
 description: "Strona wygenerowana przez prosty Static Site Generator"
+theme: light # light | dark
 
 content_dir: "content"
 templates_dir: "templates"

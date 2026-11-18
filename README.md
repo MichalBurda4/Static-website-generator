@@ -1,6 +1,6 @@
 # Static Site Generator (SSG)
 
-A simple static site generator written in Python — project for Advanced Python Programming.
+A simple static site generator written in Python — project for *Advanced Python Programming* (AGH).
 
 ## Team
 
@@ -8,83 +8,123 @@ A simple static site generator written in Python — project for Advanced Python
 - Michał Broś
 - Paweł Froń
 
-## Installation
+## Requirements
+
+- Python ≥ 3.14
+- [`uv`](https://docs.astral.sh/uv/)
+
+## Quick start
+
+```powershell
+uv sync
+uv run ssg build
+uv run python -m http.server -d output -b localhost 8000
+```
+
+Then open [http://localhost:8000](http://localhost:8000).
+
+If you have `make`:
 
 ```bash
 make setup
+make build
+make view-output
 ```
+
+## CLI commands
+
+| Command | Description |
+|---------|-------------|
+| `uv run ssg build` | Generate HTML into `output/` and copy `static/` |
+| `uv run ssg parse` | Print parsed Markdown pages (no write) |
+| `uv run ssg --version` | Show version |
+| `uv run ssg build --config path.yaml` | Build with a custom config file |
+
+Equivalent: `uv run python -m ssg build`.
+
+Generated files land in `output/` (`index.html`, root pages beside it, and nested pages mirroring folders under `content/`).
+Static assets from `static/` are copied to `output/static/`.
+
+## Configuration (`config.yaml`)
+
+```yaml
+site_name: "Mój Blog"
+author: "..."
+description: "..."
+theme: light          # light | dark
+content_dir: "content"
+templates_dir: "templates"
+static_dir: "static"
+output_dir: "output"
+```
+
+| Theme | Stylesheet |
+|-------|------------|
+| `light` (default) | `static/css/light.css` |
+| `dark` | `static/css/dark.css` |
+
+Rebuild after changing `theme` (`uv run ssg build`).
 
 ## Project structure
 
 ```
 APP/
-├── config.yaml          # site configuration
-├── content/             # Markdown files with front matter
-├── templates/           # Jinja2 templates
-├── static/              # CSS, images
-├── output/              # generated site (`make build`)
-├── artifacts/           # tooling artifacts (venv, pytest cache, coverage, ruff)
-├── src/ssg/             # source code
-└── tests/               # tests
+├── config.yaml       # site configuration
+├── content/          # Markdown + YAML front matter
+├── templates/        # Jinja2 templates
+├── static/           # CSS, images
+├── output/           # build output
+├── src/ssg/          # generator source
+├── tests/            # unit tests
+└── docs/             # documentation
 ```
 
-Tooling artifacts are kept under `artifacts/` (not scattered in the repo root):
+Modules in `src/ssg/`:
 
-| Path | Contents |
-|------|----------|
-| `artifacts/venv` | virtual environment (`make setup`) |
-| `artifacts/pytest` | pytest cache |
-| `artifacts/coverage` | coverage data + HTML report |
-| `artifacts/ruff` | ruff cache |
-
-## Build the site
-
-```bash
-uv run ssg build
-# or:
-uv run python -m ssg build
-```
-
-Optional: `uv run ssg parse` lists parsed Markdown pages without writing HTML.
-
-Generated files land in `output/` (`index.html`, root pages beside it, and posts under the same folders as in `content/`).
-Static assets from `static/` (CSS, images) are copied to `output/static/`.
-Open `output/index.html` in a browser to preview, or run `make view-output`.
-
-## Status
-
-Completed:
-
-1. Project structure and configuration
-2. Markdown + front matter parsing
-3. HTML generation from Jinja2 templates
-4. Homepage with post list + individual post pages
-5. CLI interface (`ssg parse`, `ssg build`)
-6. Copy static assets (CSS, images) into `output/static/`
+| Module | Role |
+|--------|------|
+| `config.py` | load and validate YAML |
+| `parser.py` | front matter + Markdown → HTML |
+| `renderer.py` | Jinja2 templates |
+| `builder.py` | write pages + copy static assets |
+| `cli.py` | command-line interface |
 
 ## Writing content
 
-See [docs/writing-content.md](docs/writing-content.md) for front matter fields and Markdown → HTML syntax.
+Put `.md` files in `content/` (subfolders allowed; folder layout is mirrored in `output/`). Front matter:
 
-## Parser usage example
+```markdown
+---
+title: Post title
+date: 2026-11-09
+slug: my-post
+---
 
-```python
-from pathlib import Path
-from ssg.config import load_config
-from ssg.parser import parse_markdown_file
-
-config = load_config(Path("config.yaml"))
-page = parse_markdown_file(Path("content/hello.md"))
-
-print(page.title)
-print(page.html)
+Body in **Markdown**.
 ```
 
-## Tests & coverage
+Details: [docs/writing-content.md](docs/writing-content.md).
 
-```bash
-make test
+## Tests
+
+```powershell
+uv run pytest
+uv run pytest --cov=ssg --cov-report=term-missing
 ```
 
-This runs pytest with coverage and prints the percentage in the terminal.
-An HTML report is written to `artifacts/coverage/html/index.html`.
+With Make: `make test` (setup + HTML coverage under `.artifacts/coverage/html/`).
+
+## Stack
+
+| Layer | Technology |
+|-------|------------|
+| Runtime | Python ≥ 3.14 |
+| Dependencies | uv / pyproject.toml |
+| Configuration | PyYAML |
+| Content | markdown + YAML front matter |
+| Templates | Jinja2 |
+| Tests / quality | pytest, pytest-cov, ruff, pyright, pre-commit |
+
+## Documentation
+
+Technical documentation (PDF): [`docs/Technical-Documentation.pdf`](docs/Technical-Documentation.pdf).

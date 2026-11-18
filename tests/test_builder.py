@@ -46,8 +46,12 @@ def _write_project(tmp_path: Path) -> Path:
         "---\ntitle: Extra\nslug: extra\n---\n\nExtra page.\n",
         encoding="utf-8",
     )
-    (tmp_path / "static" / "css" / "style.css").write_text(
+    (tmp_path / "static" / "css" / "light.css").write_text(
         "body { color: black; }\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "static" / "css" / "dark.css").write_text(
+        "body { color: white; }\n",
         encoding="utf-8",
     )
 
@@ -56,7 +60,7 @@ def _write_project(tmp_path: Path) -> Path:
         "<nav>{% for page in pages %}"
         "<a class='nav' href='{{ root_prefix }}{{ page.url }}'>{{ page.title }}</a>"
         "{% endfor %}</nav>"
-        "<link href='{{ static_url }}css/style.css'>"
+        "<link href='{{ static_url }}{{ site.stylesheet }}'>"
         "{% block content %}{% endblock %}</body></html>",
         encoding="utf-8",
     )
@@ -85,7 +89,7 @@ def test_build_writes_index_post_and_static(tmp_path: Path) -> None:
     post = tmp_path / "output" / "posts" / "hello.html"
     about = tmp_path / "output" / "about.html"
     extra = tmp_path / "output" / "notes" / "extra.html"
-    css = tmp_path / "output" / "static" / "css" / "style.css"
+    css = tmp_path / "output" / "static" / "css" / "light.css"
 
     assert index in result.html_files
     assert post in result.html_files
@@ -104,10 +108,10 @@ def test_build_writes_index_post_and_static(tmp_path: Path) -> None:
     assert "href='about.html'>About" in index_html
     assert "extra.html" not in index_html
     assert "<strong>world</strong>" in post_html
-    assert "../static/css/style.css" in post_html
+    assert "../static/css/light.css" in post_html
     assert "href='../index.html'" in post_html
     assert "href='../about.html'" in post_html
-    assert "href='static/css/style.css'" in about_html
+    assert "href='static/css/light.css'" in about_html
     assert "href='index.html'" in about_html
 
 
@@ -149,8 +153,26 @@ def test_copy_static_copies_css_and_images(tmp_path: Path) -> None:
 
     copied = SiteBuilder(config).copy_static()
 
-    assert (tmp_path / "output" / "static" / "css" / "style.css") in copied
+    assert (tmp_path / "output" / "static" / "css" / "light.css") in copied
     assert (tmp_path / "output" / "static" / "images" / "logo.svg") in copied
+
+
+def test_build_links_selected_theme_stylesheet(tmp_path: Path) -> None:
+    config_path = _write_project(tmp_path)
+    (tmp_path / "templates" / "base.html").write_text(
+        '<link rel="stylesheet" href="{{ static_url }}{{ site.stylesheet }}">'
+        "{% block content %}{% endblock %}",
+        encoding="utf-8",
+    )
+    raw = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    raw["theme"] = "dark"
+    config_path.write_text(yaml.dump(raw), encoding="utf-8")
+
+    config = load_config(config_path)
+    SiteBuilder(config).build()
+
+    index_html = (tmp_path / "output" / "index.html").read_text(encoding="utf-8")
+    assert "static/css/dark.css" in index_html
 
 
 def test_index_lists_posts(tmp_path: Path) -> None:

@@ -21,6 +21,9 @@ REQUIRED_FIELDS: Final[set[str]] = {
     "output_dir",
 }
 
+ALLOWED_THEMES = frozenset({"light", "dark"})
+DEFAULT_THEME = "light"
+
 
 @dataclass(frozen=True, slots=True)
 class SiteConfig:
@@ -45,6 +48,7 @@ class SiteConfig:
     static_dir: Path
     output_dir: Path
     root_dir: Path
+    theme: str = DEFAULT_THEME
 
     @property
     def content_path(self) -> Path:
@@ -82,6 +86,11 @@ class SiteConfig:
         """
         return self.root_dir / self.output_dir
 
+    @property
+    def stylesheet(self) -> str:
+        """Relative path (under ``static/``) to the active theme CSS file."""
+        return f"css/{self.theme}.css"
+
 
 def _read_yaml_mapping(config_path: Path) -> dict[str, Any]:
     """Read a YAML file and ensure the top-level value is a mapping.
@@ -118,6 +127,15 @@ def _missing_fields(raw: dict[str, Any]) -> list[str]:
     return [key for key in REQUIRED_FIELDS if key not in raw or raw[key] in (None, "")]
 
 
+def _resolve_theme(raw: dict[str, Any]) -> str:
+    """Return a validated theme name from raw config (default: light)."""
+    theme = str(raw.get("theme") or DEFAULT_THEME).strip().lower()
+    if theme not in ALLOWED_THEMES:
+        allowed = ", ".join(sorted(ALLOWED_THEMES))
+        raise ValueError(f"Invalid theme {theme!r}. Allowed values: {allowed}")
+    return theme
+
+
 def _build_site_config(raw: dict[str, Any], root_dir: Path) -> SiteConfig:
     """Build a ``SiteConfig`` from a validated raw mapping.
 
@@ -137,6 +155,7 @@ def _build_site_config(raw: dict[str, Any], root_dir: Path) -> SiteConfig:
         static_dir=Path(str(raw["static_dir"])),
         output_dir=Path(str(raw["output_dir"])),
         root_dir=root_dir,
+        theme=_resolve_theme(raw),
     )
 
 

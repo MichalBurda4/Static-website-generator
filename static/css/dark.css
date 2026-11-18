@@ -1,9 +1,10 @@
 :root {
-  --bg: #f7f4ef;
-  --text: #1f1a17;
-  --muted: #5c534c;
-  --accent: #0b5fff;
-  --line: #ddd4c8;
+  --bg: #161412;
+  --text: #f2ebe3;
+  --muted: #b0a59a;
+  --accent: #7eb0ff;
+  --line: #3a342e;
+  --code-bg: #24201c;
 }
 
 * {
@@ -48,17 +49,6 @@ a:hover {
 .site-tagline {
   margin: 0.35rem 0 0;
   color: var(--muted);
-}
-
-.site-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 1.25rem;
-  margin-top: 0.85rem;
-}
-
-.site-nav a {
-  color: var(--text);
 }
 
 .site-footer {
@@ -130,7 +120,7 @@ a:hover {
 .post-body pre {
   overflow-x: auto;
   padding: 0.85rem 1rem;
-  background: #ebe4da;
+  background: var(--code-bg);
   border-radius: 4px;
 }
 
