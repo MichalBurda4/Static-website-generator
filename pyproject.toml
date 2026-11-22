@@ -20,7 +20,7 @@ dev = [
 ]
 
 [project.scripts]
-ssg = "ssg.cli:main"
+ssg = "ssg:__main__.run"
 
 [tool.uv]
 package = true
