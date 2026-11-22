@@ -6,6 +6,8 @@ date: 2026-11-09
 
 slug: moj-wpis
 
+template: post
+
 ---
 
 # Mój nowy wpis

@@ -11,8 +11,8 @@ def run() -> None:
         FileNotFoundError: If the configuration file or content directory
             does not exist.
         TypeError: If configuration or front matter is not a YAML mapping.
-        ValueError: If configuration fields are missing or a page date is
-            invalid.
+        ValueError: If configuration fields are missing, or a page date,
+            template name, content directory name, or output URL is invalid.
         yaml.YAMLError: If a YAML file is not valid.
         jinja2.TemplateNotFound: If ``build`` cannot find a template.
     """

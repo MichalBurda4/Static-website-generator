@@ -96,7 +96,7 @@ def _cmd_parse(config: SiteConfig) -> None:
     Raises:
         FileNotFoundError: If the content directory does not exist.
         TypeError: If a page's front matter is not a YAML mapping.
-        ValueError: If a page's date is not a supported format.
+        ValueError: If a page's date or template name is invalid.
         yaml.YAMLError: If a page's front matter is not valid YAML.
     """
     pages = load_pages(config.content_path)
@@ -120,7 +120,9 @@ def _cmd_build(config: SiteConfig) -> None:
         FileNotFoundError: If the content directory does not exist.
         jinja2.TemplateNotFound: If a required template is missing.
         TypeError: If a page's front matter is not a YAML mapping.
-        ValueError: If a page's date is not a supported format.
+        ValueError: If a page's date or template name is invalid, a content
+            directory name cannot be a template variable, or a page URL
+            escapes the output directory.
         yaml.YAMLError: If a page's front matter is not valid YAML.
     """
     result = SiteBuilder(config).build()
@@ -159,8 +161,8 @@ def main(argv: list[str] | None = None) -> None:
         FileNotFoundError: If the configuration file or content directory
             does not exist.
         TypeError: If configuration or front matter is not a YAML mapping.
-        ValueError: If configuration fields are missing or a page date is
-            invalid.
+        ValueError: If configuration fields are missing, or a page date,
+            template name, content directory name, or output URL is invalid.
         yaml.YAMLError: If a YAML file is not valid.
         jinja2.TemplateNotFound: If ``build`` cannot find a template.
     """

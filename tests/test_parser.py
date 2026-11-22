@@ -2,6 +2,7 @@ from datetime import date
 from pathlib import Path
 
 import pytest
+import yaml
 
 from ssg.parser import (
     load_pages,
@@ -13,6 +14,7 @@ from ssg.parser import (
 SAMPLE = """---
 title: Przykład
 date: 2026-03-20
+template: post
 tags:
   - python
   - ssg
@@ -46,6 +48,7 @@ def test_parse_markdown_text_builds_page() -> None:
     assert page.title == "Przykład"
     assert page.date == date(2026, 3, 20)
     assert page.slug == "przyklad"
+    assert page.template == "post.html"
     assert "<strong>Markdown</strong>" in page.html
     assert page.excerpt.startswith("Treść")
 
@@ -56,11 +59,11 @@ def test_parse_markdown_file_and_load_pages(tmp_path: Path) -> None:
     posts_dir.mkdir(parents=True)
 
     (content_dir / "a.md").write_text(
-        "---\ntitle: Starszy\ndate: 2026-01-01\n---\n\nA\n",
+        "---\ntitle: Starszy\ndate: 2026-01-01\ntemplate: post\n---\n\nA\n",
         encoding="utf-8",
     )
     (posts_dir / "b.md").write_text(
-        "---\ntitle: Nowszy\ndate: 2026-02-01\n---\n\nB\n",
+        "---\ntitle: Nowszy\ndate: 2026-02-01\ntemplate: post.html\n---\n\nB\n",
         encoding="utf-8",
     )
 
@@ -73,6 +76,10 @@ def test_parse_markdown_file_and_load_pages(tmp_path: Path) -> None:
         "Nowszy": "posts/b.html",
         "Starszy": "a.html",
     }
+    assert {page.title: page.template for page in pages} == {
+        "Nowszy": "post.html",
+        "Starszy": "post.html",
+    }
 
 
 def test_parse_markdown_file_missing_raises(tmp_path: Path) -> None:
@@ -80,19 +87,52 @@ def test_parse_markdown_file_missing_raises(tmp_path: Path) -> None:
         parse_markdown_file(tmp_path / "brak.md")
 
 
-def test_parse_uses_defaults_without_front_matter() -> None:
+def test_parse_uses_defaults_for_optional_fields() -> None:
     page = parse_markdown_text(
-        "# Only body\n\nParagraph\n", source_path=Path("my_post.md")
+        "---\ntemplate: post\n---\n\n# Only body\n\nParagraph\n",
+        source_path=Path("my_post.md"),
     )
 
     assert page.title == "My Post"
     assert page.date is None
     assert page.slug == "my-post"
+    assert page.template == "post.html"
     assert page.excerpt == "Paragraph"
 
 
+def test_parse_without_template_raises() -> None:
+    with pytest.raises(ValueError, match="template"):
+        parse_markdown_text(
+            "# Only body\n\nParagraph\n",
+            source_path=Path("my_post.md"),
+        )
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "",
+        "   ",
+        "my-post",
+        "../evil",
+        "foo/bar",
+        "foo\\bar",
+        "..",
+        ".html",
+        1,
+        ["post"],
+    ],
+)
+def test_invalid_template_name_raises(raw: object) -> None:
+    front = yaml.dump({"template": raw})
+    text = f"---\n{front}---\n\nBody\n"
+
+    with pytest.raises(ValueError, match="template"):
+        parse_markdown_text(text, source_path=Path("bad.md"))
+
+
 def test_excerpt_skips_headings_only() -> None:
-    page = parse_markdown_text("# Title only\n")
+    page = parse_markdown_text("---\ntemplate: post\n---\n\n# Title only\n")
     assert page.excerpt == ""
 
 
@@ -110,7 +150,7 @@ def test_discover_missing_content_dir_raises(tmp_path: Path) -> None:
 
 def test_normalize_date_from_datetime_string() -> None:
     page = parse_markdown_text(
-        "---\ntitle: D\ndate: 2026-04-01T12:00:00\n---\n\nX\n",
+        "---\ntitle: D\ndate: 2026-04-01T12:00:00\ntemplate: post\n---\n\nX\n",
         source_path=Path("d.md"),
     )
     assert page.date == date(2026, 4, 1)

@@ -6,12 +6,17 @@ import logging
 import shutil
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
+from typing import Final
 
 from ssg.config import SiteConfig
 from ssg.parser import Page, load_pages
 from ssg.renderer import Renderer
 
 logger = logging.getLogger(__name__)
+
+_RESERVED_TEMPLATE_VARIABLES: Final[frozenset[str]] = frozenset(
+    {"site", "page", "home_url", "static_url", "root_prefix"}
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,7 +46,7 @@ class SiteBuilder:
         self._renderer = Renderer(config)
 
     def build(self) -> BuildResult:
-        """Generate the homepage, post pages, and copy static assets.
+        """Generate the homepage, content pages, and copy static assets.
 
         Returns:
             Paths of the written HTML files and copied static files.
@@ -50,18 +55,18 @@ class SiteBuilder:
             FileNotFoundError: If the content directory does not exist.
             jinja2.TemplateNotFound: If a required template is missing.
             TypeError: If a page's front matter is not a YAML mapping.
-            ValueError: If a page's date is not a supported format, or its
-                output URL escapes the output directory.
+            ValueError: If a page's date or template name is invalid, a
+                content directory name cannot be a template variable, or a
+                page URL escapes the output directory.
             yaml.YAMLError: If a page's front matter is not valid YAML.
         """
         output = self._prepare_output()
         content_dir = self._config.content_path
         documents = load_pages(content_dir)
-        posts = [page for page in documents if _is_post(page, content_dir)]
-        pages = [page for page in documents if _is_root_page(page, content_dir)]
+        collections = _content_collections(documents, content_dir)
 
-        html_files = [self._write_index(output, posts, pages)]
-        html_files.extend(self._write_documents(output, documents, pages))
+        html_files = [self._write_index(output, collections)]
+        html_files.extend(self._write_documents(output, documents, collections))
         static_files = self.copy_static(output)
 
         logger.info(
@@ -82,13 +87,12 @@ class SiteBuilder:
         logger.debug("Output directory ready: %s", output)
         return output
 
-    def _write_index(self, output: Path, posts: list[Page], pages: list[Page]) -> Path:
+    def _write_index(self, output: Path, collections: dict[str, list[Page]]) -> Path:
         """Render and write the homepage.
 
         Args:
             output: Directory that receives ``index.html``.
-            posts: Posts listed on the homepage.
-            pages: Root content pages linked from the site navigation.
+            collections: Pages grouped by their top-level content directory.
 
         Returns:
             Path of the written ``index.html``.
@@ -99,7 +103,7 @@ class SiteBuilder:
         """
         index_path = output / "index.html"
         index_path.write_text(
-            self._renderer.render_index(posts, pages),
+            self._renderer.render_index(collections),
             encoding="utf-8",
         )
         logger.info("Wrote homepage: %s", index_path)
@@ -109,44 +113,55 @@ class SiteBuilder:
         self,
         output: Path,
         documents: list[Page],
-        pages: list[Page],
+        collections: dict[str, list[Page]],
     ) -> list[Path]:
         """Render and write one HTML file per content document.
 
         Args:
             output: Directory that receives the HTML files.
             documents: Documents to render. Folders under ``content/`` are kept.
-            pages: Root content pages linked from the site navigation.
+            collections: Pages grouped by their top-level content directory.
 
         Returns:
             Paths of the written HTML files, in ``documents`` order.
 
         Raises:
-            jinja2.TemplateNotFound: If ``post.html`` is not in the
+            jinja2.TemplateNotFound: If a page's template is not in the
                 templates directory.
             ValueError: If a document URL escapes the output directory.
         """
-        return [self._write_document(output, document, pages) for document in documents]
+        return [
+            self._write_document(output, document, collections)
+            for document in documents
+        ]
 
-    def _write_document(self, output: Path, page: Page, pages: list[Page]) -> Path:
+    def _write_document(
+        self,
+        output: Path,
+        page: Page,
+        collections: dict[str, list[Page]],
+    ) -> Path:
         """Render and write a single content page.
 
         Args:
             output: Directory that receives the file.
             page: Page to render. The path is ``page.url`` under ``output``.
-            pages: Root content pages linked from the site navigation.
+            collections: Pages grouped by their top-level content directory.
 
         Returns:
             Path of the written HTML file.
 
         Raises:
-            jinja2.TemplateNotFound: If ``post.html`` is not in the
+            jinja2.TemplateNotFound: If ``page.template`` is not in the
                 templates directory.
             ValueError: If ``page.url`` escapes the output directory.
         """
         path = _output_destination(output, page.url)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(self._renderer.render_post(page, pages), encoding="utf-8")
+        path.write_text(
+            self._renderer.render_page(page, collections),
+            encoding="utf-8",
+        )
         logger.info("Wrote page: %s", path)
         return path
 
@@ -195,31 +210,38 @@ def _relative_to_content(page: Page, content_dir: Path) -> Path:
     return page.source_path.resolve().relative_to(content_dir.resolve())
 
 
-def _is_post(page: Page, content_dir: Path) -> bool:
-    """Return whether the page lives under ``content/posts/``.
+def _content_collections(
+    documents: list[Page],
+    content_dir: Path,
+) -> dict[str, list[Page]]:
+    """Group pages by their top-level directory under ``content_dir``.
 
     Args:
-        page: Page to classify.
+        documents: Pages to group. Order inside each group is preserved.
         content_dir: Root directory of Markdown sources.
 
     Returns:
-        ``True`` when the source file is inside the ``posts`` directory.
+        A mapping from directory name to the pages inside it. Files placed
+        directly in ``content_dir`` are omitted. Nested files stay in the
+        top-level directory's list.
+
+    Raises:
+        ValueError: If a directory name is not an identifier, or would
+            overwrite a reserved template variable.
     """
-    relative = _relative_to_content(page, content_dir)
-    return len(relative.parts) > 1 and relative.parts[0] == "posts"
-
-
-def _is_root_page(page: Page, content_dir: Path) -> bool:
-    """Return whether the page lives directly in the content directory.
-
-    Args:
-        page: Page to classify.
-        content_dir: Root directory of Markdown sources.
-
-    Returns:
-        ``True`` when the source file is not inside a subdirectory.
-    """
-    return len(_relative_to_content(page, content_dir).parts) == 1
+    collections: dict[str, list[Page]] = {}
+    for page in documents:
+        relative = _relative_to_content(page, content_dir)
+        if len(relative.parts) == 1:
+            continue
+        name = relative.parts[0]
+        if not name.isidentifier() or name in _RESERVED_TEMPLATE_VARIABLES:
+            raise ValueError(
+                f"{page.source_path}: content directory name cannot be a "
+                f"template variable: {name}"
+            )
+        collections.setdefault(name, []).append(page)
+    return collections
 
 
 def _output_destination(output: Path, url: str) -> Path:

@@ -2,6 +2,7 @@
 title: Witaj w SSG
 date: 2026-03-20
 slug: witaj
+template: post
 ---
 
 # Witaj

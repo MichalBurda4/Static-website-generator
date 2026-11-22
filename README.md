@@ -91,17 +91,20 @@ Modules in `src/ssg/`:
 
 ## Writing content
 
-Put `.md` files in `content/` (subfolders allowed; folder layout is mirrored in `output/`). Front matter:
+Put `.md` files in `content/` (subfolders allowed; folder layout is mirrored in `output/`). Each directory directly inside `content/` is passed to templates under that directory's name, so `content/posts/` is the `posts` list on the homepage. Front matter:
 
 ```markdown
 ---
 title: Post title
 date: 2026-11-09
 slug: my-post
+template: post
 ---
 
 Body in **Markdown**.
 ```
+
+`template` is required and selects the Jinja file (`post` loads `templates/post.html`). Header links are written in `templates/base.html`.
 
 Details: [docs/writing-content.md](docs/writing-content.md).
 

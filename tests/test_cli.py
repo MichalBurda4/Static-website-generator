@@ -27,7 +27,7 @@ def _mini_project(tmp_path: Path) -> Path:
         encoding="utf-8",
     )
     (tmp_path / "content" / "post.md").write_text(
-        "---\ntitle: Post\ndate: 2026-03-20\nslug: post\n---\n\nBody\n",
+        "---\ntitle: Post\ndate: 2026-03-20\nslug: post\ntemplate: post\n---\n\nBody\n",
         encoding="utf-8",
     )
     (tmp_path / "static" / "css" / "style.css").write_text("body{}", encoding="utf-8")

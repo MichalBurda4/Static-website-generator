@@ -35,15 +35,15 @@ def _write_project(tmp_path: Path) -> Path:
     (tmp_path / "content" / "posts").mkdir()
     (tmp_path / "content" / "notes").mkdir()
     (tmp_path / "content" / "about.md").write_text(
-        "---\ntitle: About\ndate: 2026-01-01\nslug: about\n---\n\nAbout page.\n",
+        "---\ntitle: About\ndate: 2026-01-01\nslug: about\ntemplate: post\n---\n\nAbout page.\n",
         encoding="utf-8",
     )
     (tmp_path / "content" / "posts" / "hello.md").write_text(
-        "---\ntitle: Hello\ndate: 2026-03-20\nslug: hello\n---\n\nHello **world**.\n",
+        "---\ntitle: Hello\ndate: 2026-03-20\nslug: hello\ntemplate: post\n---\n\nHello **world**.\n",
         encoding="utf-8",
     )
     (tmp_path / "content" / "notes" / "extra.md").write_text(
-        "---\ntitle: Extra\nslug: extra\n---\n\nExtra page.\n",
+        "---\ntitle: Extra\nslug: extra\ntemplate: post\n---\n\nExtra page.\n",
         encoding="utf-8",
     )
     (tmp_path / "static" / "css" / "light.css").write_text(
@@ -57,9 +57,7 @@ def _write_project(tmp_path: Path) -> Path:
 
     (tmp_path / "templates" / "base.html").write_text(
         "<!DOCTYPE html><html><body>"
-        "<nav>{% for page in pages %}"
-        "<a class='nav' href='{{ root_prefix }}{{ page.url }}'>{{ page.title }}</a>"
-        "{% endfor %}</nav>"
+        "<nav><a class='nav' href='{{ root_prefix }}about.html'>About</a></nav>"
         "<link href='{{ static_url }}{{ site.stylesheet }}'>"
         "{% block content %}{% endblock %}</body></html>",
         encoding="utf-8",
@@ -124,10 +122,11 @@ def test_renderer_uses_page_metadata(tmp_path: Path) -> None:
         date=date(2026, 3, 20),
         html="<p>Hi</p>",
         slug="hello",
+        template="post.html",
         url="posts/hello.html",
     )
 
-    html = renderer.render_post(page)
+    html = renderer.render_page(page)
     assert "Hello" in html
     assert "<p>Hi</p>" in html
 
@@ -188,9 +187,82 @@ def test_index_lists_posts(tmp_path: Path) -> None:
             content_markdown="First line",
         )
     ]
-    html = Renderer(config).render_index(posts)
+    html = Renderer(config).render_index({"posts": posts})
     assert "One" in html
     assert "posts/one.html" in html
+
+
+def test_build_renders_page_with_declared_template(tmp_path: Path) -> None:
+    config = load_config(_write_project(tmp_path))
+    (tmp_path / "templates" / "card.html").write_text(
+        "{% extends 'base.html' %}{% block content %}CARD {{ page.title }}{% endblock %}",
+        encoding="utf-8",
+    )
+    (tmp_path / "content" / "about.md").write_text(
+        "---\ntitle: About\ntemplate: card\nslug: about\n---\n\nAbout page.\n",
+        encoding="utf-8",
+    )
+
+    SiteBuilder(config).build()
+
+    about_html = (tmp_path / "output" / "about.html").read_text(encoding="utf-8")
+    assert "CARD About" in about_html
+
+
+def test_index_receives_each_content_directory(tmp_path: Path) -> None:
+    config_path = _write_project(tmp_path)
+    (tmp_path / "templates" / "index.html").write_text(
+        "{% extends 'base.html' %}{% block content %}"
+        "{% for note in notes %}<a href='{{ note.url }}'>{{ note.title }}</a>"
+        "{% endfor %}{% endblock %}",
+        encoding="utf-8",
+    )
+
+    SiteBuilder(load_config(config_path)).build()
+
+    index_html = (tmp_path / "output" / "index.html").read_text(encoding="utf-8")
+    assert "notes/extra.html" in index_html
+    assert "posts/hello.html" not in index_html
+
+
+def test_nested_directory_stays_in_top_level_collection(tmp_path: Path) -> None:
+    config = load_config(_write_project(tmp_path))
+    nested = tmp_path / "content" / "posts" / "2026"
+    nested.mkdir()
+    (nested / "older.md").write_text(
+        "---\ntitle: Older\ndate: 2020-01-01\ntemplate: post\nslug: older\n---\n\nOld.\n",
+        encoding="utf-8",
+    )
+
+    SiteBuilder(config).build()
+
+    index_html = (tmp_path / "output" / "index.html").read_text(encoding="utf-8")
+    assert "posts/2026/older.html" in index_html
+    assert (tmp_path / "output" / "posts" / "2026" / "older.html").is_file()
+
+
+@pytest.mark.parametrize("dirname", ["page", "my-notes"])
+def test_build_rejects_unusable_collection_name(tmp_path: Path, dirname: str) -> None:
+    config = load_config(_write_project(tmp_path))
+    folder = tmp_path / "content" / dirname
+    folder.mkdir()
+    (folder / "x.md").write_text(
+        "---\ntitle: X\ntemplate: post\n---\n\nX\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="template variable"):
+        SiteBuilder(config).build()
+
+
+def test_build_rejects_missing_template(tmp_path: Path) -> None:
+    config = load_config(_write_project(tmp_path))
+    (tmp_path / "content" / "bare.md").write_text(
+        "# No front matter\n", encoding="utf-8"
+    )
+
+    with pytest.raises(ValueError, match="template"):
+        SiteBuilder(config).build()
 
 
 def test_output_destination_rejects_absolute_url(tmp_path: Path) -> None:
@@ -201,7 +273,7 @@ def test_output_destination_rejects_absolute_url(tmp_path: Path) -> None:
 def test_build_rejects_slug_that_escapes_output(tmp_path: Path) -> None:
     config = load_config(_write_project(tmp_path))
     (tmp_path / "content" / "bad.md").write_text(
-        '---\ntitle: Bad\nslug: "../evil"\n---\n\nNope.\n',
+        '---\ntitle: Bad\nslug: "../evil"\ntemplate: post\n---\n\nNope.\n',
         encoding="utf-8",
     )
 

@@ -30,13 +30,13 @@ class Renderer:
         )
         logger.debug("Renderer ready (templates=%s)", config.templates_path)
 
-    def render_index(self, posts: list[Page], pages: list[Page] | None = None) -> str:
-        """Render the homepage with a list of posts.
+    def render_index(self, collections: dict[str, list[Page]] | None = None) -> str:
+        """Render the homepage.
 
         Args:
-            posts: Posts passed to the ``index.html`` template as ``posts``.
-            pages: Root content pages passed to every template as ``pages``.
-                Used for the site navigation. Defaults to an empty list.
+            collections: Pages grouped by the top-level content directory
+                that contains them. Each directory name is a template
+                variable. Defaults to an empty mapping.
 
         Returns:
             Rendered homepage HTML.
@@ -44,34 +44,42 @@ class Renderer:
         Raises:
             jinja2.TemplateNotFound: If ``index.html`` is missing.
         """
+        groups = {} if collections is None else collections
         template = self._env.get_template("index.html")
         html = template.render(
+            **groups,
             site=self._config,
-            posts=posts,
-            **_link_context("", pages),
+            **_link_context(""),
         )
-        logger.debug("Rendered index with %d post(s)", len(posts))
+        logger.debug("Rendered index with %d collection(s)", len(groups))
         return html
 
-    def render_post(self, page: Page, pages: list[Page] | None = None) -> str:
-        """Render a single content page.
+    def render_page(
+        self,
+        page: Page,
+        collections: dict[str, list[Page]] | None = None,
+    ) -> str:
+        """Render a single content page with its declared template.
 
         Args:
-            page: Page passed to the ``post.html`` template.
-            pages: Root content pages passed to every template as ``pages``.
-                Used for the site navigation. Defaults to an empty list.
+            page: Page to render. ``page.template`` names the Jinja file.
+            collections: Pages grouped by the top-level content directory
+                that contains them. Each directory name is a template
+                variable. Defaults to an empty mapping.
 
         Returns:
             Rendered page HTML.
 
         Raises:
-            jinja2.TemplateNotFound: If ``post.html`` is missing.
+            jinja2.TemplateNotFound: If ``page.template`` is missing.
         """
-        template = self._env.get_template("post.html")
+        groups = {} if collections is None else collections
+        template = self._env.get_template(page.template)
         html = template.render(
+            **groups,
             site=self._config,
             page=page,
-            **_link_context(page.url, pages),
+            **_link_context(page.url),
         )
         logger.debug("Rendered page %s", page.url or page.slug)
         return html
@@ -92,20 +100,18 @@ def _root_prefix(url: str) -> str:
     return "../" * len(parent.parts)
 
 
-def _link_context(url: str, pages: list[Page] | None) -> dict[str, object]:
+def _link_context(url: str) -> dict[str, str]:
     """Build the template variables shared by every HTML page.
 
     Args:
         url: Site-relative path of the page being rendered. Empty for the
             homepage.
-        pages: Root content pages linked from the navigation.
 
     Returns:
-        ``pages``, ``home_url``, ``static_url``, and ``root_prefix``.
+        ``home_url``, ``static_url``, and ``root_prefix``.
     """
     prefix = _root_prefix(url)
     return {
-        "pages": [] if pages is None else pages,
         "home_url": f"{prefix}index.html",
         "static_url": f"{prefix}static/",
         "root_prefix": prefix,

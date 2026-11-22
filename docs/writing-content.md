@@ -17,18 +17,20 @@ Each file has two parts:
 title: My Post Title
 date: 2026-10-18
 slug: my-post
+template: post
 ---
 ```
 
 | Field | Required | What it becomes / does |
 |-------|----------|-------------------------|
+| `template` | Yes | Jinja template used to render the page. `post` and `post.html` both load `templates/post.html`. The name must be a single identifier, with no path separators. |
 | `title` | No | Page title. If omitted, derived from the file name. |
 | `date` | No | Publication date (`YYYY-MM-DD`). Used to sort pages (newest first). |
 | `slug` | No | Short id (for URLs later). If omitted, derived from the file name (`My_File.md` → `my-file`). |
 
-You may add extra YAML fields (e.g. `tags:`). They are stored in `Page.metadata` but are not used in HTML generation yet.
+You may add extra YAML fields (e.g. `tags:`). They are stored in `Page.metadata`. The generator uses `title`, `date`, `slug`, and `template` when building the page.
 
-If there is no front matter, the whole file is treated as the Markdown body.
+Every page needs front matter with `template`. A file that has no front matter fails the build.
 
 ---
 
@@ -60,6 +62,7 @@ After the closing `---`, write normal Markdown. Supported features (via the `mar
 title: Hello SSG
 date: 2026-03-20
 slug: hello
+template: post
 ---
 
 # Welcome
@@ -85,10 +88,19 @@ Notes:
 
 | Path | Role |
 |------|------|
-| `content/hello.md` | Site page. Linked from the header navigation. Written to `output/{slug}.html`. |
-| `content/posts/my-post.md` | Blog post. Listed on the homepage. Written to `output/posts/{slug}.html`. |
+| `content/hello.md` | Site page. Written to `output/{slug}.html`. Add a link in `templates/base.html` when it should appear in the header. |
+| `content/posts/my-post.md` | Member of the `posts` collection. The homepage lists it because `templates/index.html` loops `posts`. Written to `output/posts/{slug}.html`. |
+| `content/notes/extra.md` | Member of the `notes` collection. A template can loop `notes` the same way the homepage loops `posts`. Written to `output/notes/{slug}.html`. |
 
-The output directory keeps the same folders as `content/`. Only files inside `content/posts/` appear in the homepage post list. Markdown files placed directly in `content/` appear in the header menu. A file in any other subfolder is still built, at the matching path under `output/`, and is not linked from either place.
+The output directory keeps the same folders as `content/`. Each directory placed directly inside `content/` becomes a template variable of the same name, holding the pages inside that directory (including pages in nested folders). Files placed directly in `content/` are rendered and left out of those lists.
+
+The directory name has to be a valid identifier, and it cannot be `site`, `page`, `home_url`, `static_url`, or `root_prefix`.
+
+Header links are written explicitly in `templates/base.html`. They use `root_prefix` so the same link works from nested pages:
+
+```html
+<a href="{{ root_prefix }}witaj.html">Witaj w SSG</a>
+```
 
 ---
 

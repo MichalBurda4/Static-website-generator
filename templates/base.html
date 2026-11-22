@@ -12,13 +12,11 @@
     <div class="wrap">
       <a class="site-title" href="{{ home_url }}">{{ site.site_name }}</a>
       <p class="site-tagline">{{ site.description }}</p>
-      {% if pages %}
       <nav class="site-nav" aria-label="Pages">
-        {% for page in pages %}
-        <a href="{{ root_prefix }}{{ page.url }}">{{ page.title }}</a>
-        {% endfor %}
+        <a href="{{ root_prefix }}witaj.html">Witaj w SSG</a>
+        <a href="{{ root_prefix }}test.html">ABC</a>
+        <a href="{{ root_prefix }}moj-wpis.html">Mój nowy wpis</a>
       </nav>
-      {% endif %}
     </div>
   </header>
 

@@ -32,6 +32,7 @@ class Page:
         content_markdown: Markdown body with the front matter removed.
         html: Body converted to HTML.
         slug: URL slug used as the output file name.
+        template: Jinja template filename, such as ``post.html``.
         url: Site-relative HTML path, such as ``witaj.html`` or
             ``posts/drugi-wpis.html``. Empty until the page is loaded from a
             content directory.
@@ -44,6 +45,7 @@ class Page:
     content_markdown: str = ""
     html: str = ""
     slug: str = ""
+    template: str = ""
     url: str = ""
 
     @property
@@ -188,6 +190,34 @@ def _slug_from_metadata(metadata: dict[str, Any], path: Path) -> str:
     return _slug_from_path(path)
 
 
+def _template_filename(raw: Any, path: Path) -> str:
+    """Resolve the Jinja template filename from front matter.
+
+    Args:
+        raw: Value of the ``template`` field. ``post`` and ``post.html`` both
+            select ``post.html``.
+        path: Source Markdown path, included in the error message.
+
+    Returns:
+        The template filename inside the templates directory.
+
+    Raises:
+        ValueError: If ``raw`` is missing, empty, not a string, or not a safe
+            template name.
+    """
+    if not isinstance(raw, str) or not raw.strip():
+        raise ValueError(f"{path}: front matter must include a template name.")
+
+    text = raw.strip()
+    if "/" in text or "\\" in text or ".." in text:
+        raise ValueError(f"{path}: template name is not a safe identifier: {raw!r}")
+
+    name = text.removesuffix(".html")
+    if not name.isidentifier():
+        raise ValueError(f"{path}: template name is not a safe identifier: {raw!r}")
+    return f"{name}.html"
+
+
 def parse_markdown_text(text: str, *, source_path: Path | None = None) -> Page:
     """Parse Markdown file contents (text) into a ``Page`` object.
 
@@ -200,7 +230,8 @@ def parse_markdown_text(text: str, *, source_path: Path | None = None) -> Page:
 
     Raises:
         TypeError: If the front matter is not a YAML mapping.
-        ValueError: If the front-matter date is not a supported format.
+        ValueError: If the front-matter date is not a supported format, or
+            ``template`` is missing or not a safe template name.
         yaml.YAMLError: If the front matter is not valid YAML.
     """
     path = source_path or Path("untitled.md")
@@ -213,6 +244,7 @@ def parse_markdown_text(text: str, *, source_path: Path | None = None) -> Page:
         content_markdown=body.strip("\n"),
         html=markdown_to_html(body),
         slug=_slug_from_metadata(metadata, path),
+        template=_template_filename(metadata.get("template"), path),
     )
     logger.debug("Parsed page %s (slug=%s)", path, page.slug)
     return page
@@ -230,7 +262,8 @@ def parse_markdown_file(path: Path) -> Page:
     Raises:
         FileNotFoundError: If ``path`` is not a file.
         TypeError: If the front matter is not a YAML mapping.
-        ValueError: If the front-matter date is not a supported format.
+        ValueError: If the front-matter date is not a supported format, or
+            ``template`` is missing or not a safe template name.
         yaml.YAMLError: If the front matter is not valid YAML.
     """
     if not path.is_file():
@@ -323,7 +356,8 @@ def load_pages(content_dir: Path) -> list[Page]:
     Raises:
         FileNotFoundError: If ``content_dir`` does not exist.
         TypeError: If a page's front matter is not a YAML mapping.
-        ValueError: If a page's date is not a supported format.
+        ValueError: If a page's date is not a supported format, or its
+            ``template`` is missing or not a safe template name.
         yaml.YAMLError: If a page's front matter is not valid YAML.
     """
     pages = [
