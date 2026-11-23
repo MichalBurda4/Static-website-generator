@@ -19,4 +19,4 @@ Możesz pisać w Markdown:
 
 Gmach główny AGH:
 
-![Gmach główny AGH w Krakowie](static/images/agh-main-building.jpg)
+![Gmach główny AGH w Krakowie](/static/images/agh-main-building.jpg)
